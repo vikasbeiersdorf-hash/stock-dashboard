@@ -146,6 +146,7 @@ td{padding:7px 11px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
     <span class="fc" id="fc"></span>
     <span class="upill" id="upd"></span>
     <div class="tba">
+      <button class="btn g" onclick="showScreen('upload-screen')">&#8593; Update Data</button>
       <button class="btn" onclick="dlExcel()">&#8595; Excel</button>
       <button class="btn" onclick="dlCSV()">&#8595; CSV</button>
       <button class="btn" onclick="window.print()">&#128438; Print</button>
@@ -173,10 +174,10 @@ td{padding:7px 11px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
     <div class="tw" id="et"></div>
   </div>
   <div class="tp" id="tp3"><div class="fb"><input type="text" id="sb" placeholder="Search by item name, store, item code or batch no..." oninput="rF()"><select id="stf" onchange="rF()"><option value="">All Store Types</option></select><select id="lf2" onchange="rF()"><option value="">All Locations</option></select><span class="cnt" id="fc2"></span></div><div class="tw" id="ft"></div></div>
-  <div class="tp" id="tp4"><div class="fb"><input type="text" id="sb2" placeholder="Search any column..." oninput="rR()"><select id="lf3" onchange="rR()"><option value="">All Locations</option></select><select id="sf2" onchange="rR()"><option value="">All Store Types</option></select><span class="cnt" id="rc2"></span></div><div class="tw" id="rt"></div></div>
+  <div class="tp" id="tp4"><div class="fb"><input type="text" id="sb2" placeholder="Search any column..." oninput="rR()"><select id="lf3" onchange="rR()"><option value="">All Locations</option></select><select id="sf2" onchange="rR()"><option value="">All Store Types</option></select><span class="cnt" id="rc2"></span><button class="btn g" onclick="dlRawExcel()" title="Download filtered data as Excel">&#8595; Excel</button><button class="btn" onclick="dlRawCSV()" title="Download filtered data as CSV">&#8595; CSV</button></div><div class="tw" id="rt"></div></div>
 </div>
 
-</div>
+</div><!-- /wrap -->
 <script>
 let D=[],CH={},RAW=[],RC=[],FN='';
 
@@ -260,25 +261,9 @@ function parseRaw(buf){
 }
 function ecat(m){if(m<0)return'Expired';if(m<=3)return'0-3 Months';if(m<=6)return'3-6 Months';if(m<=12)return'6-12 Months';if(m>=999)return'No Expiry';return'>12 Months';}
 function stype(s){s=s.trim().toUpperCase();if(s.includes('PHC'))return'PHC';if(s.includes('B2B'))return'B2B';if(s.includes('MRR'))return'MRR';if(s.includes('GOV'))return'GOV';return'OTHER';}
-function inr(n){return '₹'+Math.round(n).toLocaleString('en-IN');}
+function inr(n){return'₹'+Math.round(n).toLocaleString('en-IN');}
 function num(n){return Math.round(n).toLocaleString('en-IN');}
 function bc(c){if(c==='Expired')return'br';if(c==='0-3 Months')return'bo';if(c==='3-6 Months'||c==='6-12 Months')return'by';if(c==='No Expiry')return'bx';return'bg';}
-
-function updateKPIBoxes(filteredData) {
-  const tV=filteredData.reduce((s,r)=>s+r.CLSTKVAL,0),tQ=filteredData.reduce((s,r)=>s+r.CLSTKQTY,0);
-  const expV=filteredData.filter(r=>r.EXP_CAT==='Expired').reduce((s,r)=>s+r.CLSTKVAL,0);
-  const nearV=filteredData.filter(r=>r.MTHS2EXP>=0 && r.MTHS2EXP<=6).reduce((s,r)=>s+r.CLSTKVAL,0);
-  
-  document.getElementById('kg').innerHTML=[
-    {l:'Total Records',v:filteredData.length.toLocaleString(),c:''},
-    {l:'Total Qty',v:num(tQ),c:''},
-    {l:'Total Stock Value',v:inr(tV),c:''},
-    {l:'Locations',v:new Set(filteredData.map(r=>r.LOCCD)).size,c:'grn'},
-    {l:'Unique SKUs',v:new Set(filteredData.map(r=>r.ITEMCD)).size,c:''},
-    {l:'Expired Stock',v:inr(expV),c:'red'},
-    {l:'Near Expiry ≤6M',v:inr(nearV),c:'org'},
-  ].map(k=>'<div class="kpi '+k.c+'"><div class="kl">'+k.l+'</div><div class="kv">'+k.v+'</div></div>').join('');
-}
 
 function build(fname,meta){
   showScreen('dash-screen');
@@ -290,8 +275,19 @@ function build(fname,meta){
     document.getElementById('upd').textContent='Updated: '+d.toLocaleDateString('en-IN')+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
   }
   document.getElementById('hst').textContent=D.length.toLocaleString()+' records loaded';
-  
-  updateKPIBoxes(D);
+  const tV=D.reduce((s,r)=>s+r.CLSTKVAL,0),tQ=D.reduce((s,r)=>s+r.CLSTKQTY,0);
+  const expV=D.filter(r=>r.EXP_CAT==='Expired').reduce((s,r)=>s+r.CLSTKVAL,0);
+  const nearV=D.filter(r=>r.MTHS2EXP>=0 && r.MTHS2EXP<=6).reduce((s,r)=>s+r.CLSTKVAL,0);
+  document.getElementById('kg').innerHTML=[
+    {l:'Total Records',v:D.length.toLocaleString(),c:''},
+    {l:'Total Qty',v:num(tQ),c:''},
+    {l:'Total Stock Value',v:inr(tV),c:''},
+    {l:'Locations',v:new Set(D.map(r=>r.LOCCD)).size,c:'grn'},
+    {l:'Stores',v:new Set(D.map(r=>r.STORENAME)).size,c:'grn'},
+    {l:'Unique SKUs',v:new Set(D.map(r=>r.ITEMCD)).size,c:''},
+    {l:'Expired Stock',v:inr(expV),c:'red'},
+    {l:'Near Expiry ≤6M',v:inr(nearV),c:'org'},
+  ].map(k=>'<div class="kpi '+k.c+'"><div class="kl">'+k.l+'</div><div class="kv">'+k.v+'</div></div>').join('');
   charts(); locF(); rL(); expF(); rE(); fullF(); rawF();
 }
 
@@ -315,9 +311,6 @@ function charts(){
 function locF(){const t=[...new Set(D.map(r=>r.STORE_TYPE))].sort();document.getElementById('sf1').innerHTML='<option value="">All Store Types</option>'+t.map(x=>'<option>'+x+'</option>').join('');}
 function rL(){
   const tp=document.getElementById('sf1').value, src=tp?D.filter(r=>r.STORE_TYPE===tp):D, m={};
-  
-  updateKPIBoxes(src);
-
   src.forEach(r=>{if(!m[r.LOCCD])m[r.LOCCD]={n:r.LOCNAME,s:new Set(),t:new Set(),q:0,v:0};m[r.LOCCD].s.add(r.STORENAME);m[r.LOCCD].t.add(r.STORE_TYPE);m[r.LOCCD].q+=r.CLSTKQTY;m[r.LOCCD].v+=r.CLSTKVAL;});
   const tot=Object.values(m).reduce((s,v)=>s+v.v,0), rows=Object.entries(m).sort((a,b)=>b[1].v-a[1].v);
   document.getElementById('lc2').textContent=rows.length+' locations';
@@ -333,9 +326,6 @@ function rE(){
   const cat=document.getElementById('ef').value, loc=document.getElementById('lf1').value;
   let rows=D.filter(r=>r.MTHS2EXP<=12);
   if(cat) rows=rows.filter(r=>r.EXP_CAT===cat); if(loc) rows=rows.filter(r=>r.LOCCD===loc);
-  
-  updateKPIBoxes(rows);
-
   rows.sort((a,b)=>a.MTHS2EXP-b.MTHS2EXP);
   document.getElementById('ec2').textContent=rows.length.toLocaleString()+' records';
   let h='<table><thead><tr><th style="width:105px">Category</th><th style="width:60px">Loc</th><th style="width:155px">Store</th><th>Item Name</th><th style="width:95px">Batch No</th><th style="width:76px;text-align:center">Mfg Date</th><th style="width:76px;text-align:center">Exp Date</th><th style="width:52px;text-align:center">Mths</th><th style="width:66px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
@@ -354,9 +344,6 @@ function rF(){
   let rows=D;
   if(s) rows=rows.filter(r=>r.ITEMNAME.toLowerCase().includes(s)||r.STORENAME.toLowerCase().includes(s)||r.ITEMCD.toLowerCase().includes(s)||r.BTREFNO.toLowerCase().includes(s));
   if(tp) rows=rows.filter(r=>r.STORE_TYPE===tp); if(loc) rows=rows.filter(r=>r.LOCCD===loc);
-  
-  updateKPIBoxes(rows);
-
   document.getElementById('fc2').textContent=rows.length.toLocaleString()+' records';
   let h='<table><thead><tr><th style="width:58px">Loc</th><th style="width:148px">Store</th><th style="width:74px;text-align:center">Type</th><th style="width:106px">Item Code</th><th>Item Name</th><th style="width:104px">Batch No</th><th style="width:74px;text-align:center">Mfg Date</th><th style="width:74px;text-align:center">Exp Date</th><th style="width:88px">Status</th><th style="width:64px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
   rows.slice(0,500).forEach(r=>{h+='<tr><td style="font-weight:700;color:#1F3864">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME.slice(0,22)+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+r.STORE_TYPE+'</span></td><td style="font-size:12px;color:#64748B">'+r.ITEMCD+'</td><td style="font-size:12px">'+r.ITEMNAME.slice(0,40)+'</td><td style="font-size:12px;font-family:monospace;color:#475569">'+r.BTREFNO+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
@@ -374,29 +361,8 @@ function rR(){
   if(!RAW.length){document.getElementById('rt').innerHTML='<div style="padding:30px;text-align:center;color:#64748B;font-size:13px">Raw data not available.</div>';return;}
   const s=document.getElementById('sb2').value.toLowerCase(), loc=document.getElementById('lf3').value, stp=document.getElementById('sf2').value;
   let rows=RAW;
-  let kpiSourceRows=D;
-
-  if(loc||stp){
-    const vi=new Set();
-    D.forEach((r,i)=>{
-      if((!loc||r.LOCCD===loc)&&(!stp||r.STORE_TYPE===stp)) vi.add(i);
-    });
-    rows=RAW.filter((_,i)=>vi.has(i));
-    kpiSourceRows=D.filter((_,i)=>vi.has(i));
-  }
-  if(s) {
-    const matchedIndices = new Set();
-    RAW.forEach((r, i) => {
-      if(Object.values(r).some(v=>(v+'').toLowerCase().includes(s))) {
-         matchedIndices.add(i);
-      }
-    });
-    rows = rows.filter((_, i) => matchedIndices.has(RAW.indexOf(rows[i])));
-    kpiSourceRows = kpiSourceRows.filter((_, i) => matchedIndices.has(RAW.indexOf(rows[i])));
-  }
-
-  updateKPIBoxes(kpiSourceRows);
-
+  if(loc||stp){const vi=new Set();D.forEach((r,i)=>{if((!loc||r.LOCCD===loc)&&(!stp||r.STORE_TYPE===stp))vi.add(i);});rows=RAW.filter((_,i)=>vi.has(i));}
+  if(s) rows=rows.filter(r=>Object.values(r).some(v=>(v+'').toLowerCase().includes(s)));
   document.getElementById('rc2').textContent=rows.length.toLocaleString()+' records';
   const cols=RC.length?RC:(rows.length?Object.keys(rows[0]):[]);
   let h='<table><thead><tr>'+cols.map(c=>'<th style="white-space:nowrap;font-size:11px">'+c+'</th>').join('')+'</tr></thead><tbody>';
@@ -408,12 +374,8 @@ function rR(){
 function st(i){
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('on',i===j));
   document.querySelectorAll('.tp').forEach((p,j)=>p.classList.toggle('on',i===j));
-  
-  if(i===0) { updateKPIBoxes(D); setTimeout(()=>{Object.values(CH).forEach(c=>{try{c.resize()}catch(e){}});},60); }
-  if(i===1) rL(); 
-  if(i===2) rE(); 
-  if(i===3) rF(); 
-  if(i===4) rR();
+  if(i===0) setTimeout(()=>{Object.values(CH).forEach(c=>{try{c.resize()}catch(e){}});},60);
+  if(i===3) rF(); if(i===4) rR();
 }
 
 function dlExcel(){
@@ -429,6 +391,31 @@ function dlCSV(){
   let csv=cols.join(',')+'\n';
   D.forEach(r=>{csv+=cols.map(c=>{const v=r[c];return typeof v==='string'&&v.includes(',')?'"'+v+'"':v;}).join(',')+'\n';});
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='StockReport_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
+}
+function getFilteredRaw(){
+  if(!RAW.length) return [];
+  const s=document.getElementById('sb2').value.toLowerCase(), loc=document.getElementById('lf3').value, stp=document.getElementById('sf2').value;
+  let rows=RAW;
+  if(loc||stp){const vi=new Set();D.forEach((r,i)=>{if((!loc||r.LOCCD===loc)&&(!stp||r.STORE_TYPE===stp))vi.add(i);});rows=RAW.filter((_,i)=>vi.has(i));}
+  if(s) rows=rows.filter(r=>Object.values(r).some(v=>(v+'').toLowerCase().includes(s)));
+  return rows;
+}
+function dlRawExcel(){
+  const rows=getFilteredRaw(); if(!rows.length){alert('No data to download.');return;}
+  const cols=RC.length?RC:Object.keys(rows[0]);
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([cols,...rows.map(r=>cols.map(c=>r[c]!==undefined?r[c]:''))]);
+  const loc=document.getElementById('lf3').value||'AllLocations', stp=document.getElementById('sf2').value||'AllStores';
+  XLSX.utils.book_append_sheet(wb,ws,'Stock Report');
+  XLSX.writeFile(wb,'StockReport_'+loc+'_'+stp+'_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+function dlRawCSV(){
+  const rows=getFilteredRaw(); if(!rows.length){alert('No data to download.');return;}
+  const cols=RC.length?RC:Object.keys(rows[0]);
+  let csv=cols.join(',')+'\n';
+  rows.forEach(r=>{csv+=cols.map(c=>{const v=r[c]!==undefined?r[c]:'';return typeof v==='string'&&v.includes(',')?'"'+v+'"':v;}).join(',')+'\n';});
+  const loc=document.getElementById('lf3').value||'AllLocations', stp=document.getElementById('sf2').value||'AllStores';
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='StockReport_'+loc+'_'+stp+'_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
 }
 </script>
 </body>
