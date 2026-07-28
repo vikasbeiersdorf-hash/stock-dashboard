@@ -147,7 +147,8 @@ td{padding:7px 11px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
     <span class="fn" id="fn"></span>
     <span class="fc" id="fc"></span>
     <span class="upill" id="upd"></span>
-    <select id="dateSel" onchange="loadDateData(this.value)" style="padding:6px 10px;border:1.5px solid #B0C4DE;border-radius:7px;font-size:12px;font-family:Arial,sans-serif;background:#fff;color:#1F3864"></select>
+    <input type="date" id="dateSel" onchange="onDateSelChange(this.value)" style="padding:6px 10px;border:1.5px solid #B0C4DE;border-radius:7px;font-size:12px;font-family:Arial,sans-serif;background:#fff;color:#1F3864">
+    <span id="dateHint" style="font-size:11px;color:#64748B;display:none;"></span>
     <select id="compareSel" onchange="doCompare(this.value)" style="padding:6px 10px;border:1.5px solid #B0C4DE;border-radius:7px;font-size:12px;font-family:Arial,sans-serif;background:#fff;color:#1F3864;display:none"></select>
     <div class="tba">
       <button class="btn" onclick="dlExcel()">&#8595; Excel</button>
@@ -254,11 +255,30 @@ async function loadDateData(date,isInitial){
   }
 }
 
+function onDateSelChange(val){
+  if(!DATES.length || !val) return;
+  let resolved = val;
+  const hint = document.getElementById('dateHint');
+  if(!DATES.includes(val)){
+    const earlier = DATES.filter(d=>d<=val).sort();
+    resolved = earlier.length ? earlier[earlier.length-1] : DATES[0];
+    hint.style.display = 'inline';
+    hint.textContent = 'No data for '+val+' — showing nearest available: '+resolved;
+    document.getElementById('dateSel').value = resolved;
+  } else {
+    hint.style.display = 'none';
+  }
+  loadDateData(resolved);
+}
+
 function populateDateSelector(selected){
   const sel=document.getElementById('dateSel');
   if(!DATES.length){ sel.style.display='none'; document.getElementById('compareSel').style.display='none'; return; }
   sel.style.display='inline-block';
-  sel.innerHTML=DATES.slice().reverse().map(d=>'<option value="'+d+'"'+(d===selected?' selected':'')+'>'+d+'</option>').join('');
+  sel.min = DATES[0];
+  sel.max = DATES[DATES.length-1];
+  sel.value = selected;
+  document.getElementById('dateHint').style.display='none';
 
   const cmp=document.getElementById('compareSel');
   if(DATES.length>1){
