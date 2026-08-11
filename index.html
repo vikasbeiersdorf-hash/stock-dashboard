@@ -676,7 +676,7 @@ function togglePlasterAll(state){
 }
 function printPlaster(){
   const rows=plasterRows().filter(r=>selPlaster.has(plasterKey(r)));
-  if(!rows.length){alert('Kripya print karne ke liye kam se kam ek item select karein.');return;}
+  if(!rows.length){alert('Please select at least one item to print.');return;}
   const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
   let h='<div class="pph"><h2>&#129604; Printed Plaster Stock Report</h2><p>'+(document.getElementById('fn')?document.getElementById('fn').textContent:'')+' &#183; Generated: '+new Date().toLocaleString('en-IN')+' &#183; '+rows.length+' item(s) selected</p></div>';
   h+='<table><thead><tr><th>Loc</th><th>Store</th><th>Type</th><th>Item Code</th><th>Item Name</th><th>Batch No</th><th>Mfg Date</th><th>Exp Date</th><th>Status</th><th style="text-align:right">Qty</th><th style="text-align:right">Value</th></tr></thead><tbody>';
