@@ -77,6 +77,16 @@ td{padding:7px 11px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
 .pf{height:100%;border-radius:3px;background:#2E75B6}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:#F1F5F9}::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
 @media print{header,.tba,.tabbar,.fb{display:none!important}.tp{display:block!important}}
+.pchk{width:16px;height:16px;cursor:pointer}
+#plasterPrintArea{display:none}
+.pph{background:#fff;padding:14px 0;border-bottom:2px solid #1F3864;margin-bottom:10px}
+.pph h2{color:#1F3864;font-size:18px}
+.pph p{font-size:12px;color:#64748B;margin-top:3px}
+@media print{
+  body.printing-plaster .wrap>*{display:none!important}
+  body.printing-plaster #plasterPrintArea{display:block!important}
+  body.printing-plaster header{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -164,6 +174,7 @@ td{padding:7px 11px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
     <button class="tab" onclick="st(2)">&#9888; Expiry Risk</button>
     <button class="tab" onclick="st(3)">&#128269; Customised Data</button>
     <button class="tab" onclick="st(4)">&#128196; Stock Report</button>
+    <button class="tab" onclick="st(5)">&#129604; Printed Plaster</button>
   </div>
   <div class="tp on" id="tp0">
     <div class="cg">
@@ -180,11 +191,38 @@ td{padding:7px 11px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
   </div>
   <div class="tp" id="tp3"><div class="fb"><input type="text" id="sb" placeholder="Search by item name, store, item code or batch no..." oninput="rF()"><select id="stf" onchange="rF()"><option value="">All Store Types</option></select><select id="lf2" onchange="rF()"><option value="">All Locations</option></select><span class="cnt" id="fc2"></span></div><div class="tw" id="ft"></div></div>
   <div class="tp" id="tp4"><div class="fb"><input type="text" id="sb2" placeholder="Search any column..." oninput="rR()"><select id="lf3" onchange="rR()"><option value="">All Locations</option></select><select id="sf2" onchange="rR()"><option value="">All Store Types</option></select><span class="cnt" id="rc2"></span><button class="btn g" onclick="dlRawExcel()" title="Download filtered data as Excel">&#8595; Excel</button><button class="btn" onclick="dlRawCSV()" title="Download filtered data as CSV">&#8595; CSV</button></div><div class="tw" id="rt"></div></div>
+  <div class="tp" id="tp5">
+    <div class="fb">
+      <input type="text" id="sbP" placeholder="Search plaster item, store or batch no..." oninput="rP()">
+      <select id="lfP" onchange="rP()"><option value="">All Locations</option></select>
+      <span class="cnt" id="pc2"></span>
+      <button class="btn" onclick="togglePlasterAll(true)">Select All</button>
+      <button class="btn" onclick="togglePlasterAll(false)">Clear Selection</button>
+      <button class="btn g" onclick="printPlaster()">&#128438; Print Selected</button>
+      <button class="btn" onclick="togglePlasterCfg()">&#9881; Set Item Codes</button>
+    </div>
+    <div id="pCfgPanel" style="display:none;background:#F8FAFD;border:1px solid #E2E8F0;border-radius:8px;padding:14px;margin-bottom:12px">
+      <div style="font-size:12px;color:#1F3864;font-weight:700;margin-bottom:6px">Yahan jo Item Codes daloge, sirf unhi ka data is tab me sabke liye dikhega</div>
+      <textarea id="pCfgInput" rows="3" style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:monospace" placeholder="e.g. ITM001, ITM002, ITM003 (comma ya nayi line se alag karke likhein)"></textarea>
+      <div class="ibox" style="margin:10px 0">
+        <strong>&#128196; Ye kaise kaam karta hai:</strong>
+        1. Upar item codes likhein (jitne bhi chahiye, e.g. 10) &#8594; "Save Config" dabayein<br>
+        2. Ek <code>plaster_config.json</code> file download hogi<br>
+        3. Ise apne GitHub repo me upload karein (agar pehle se hai to replace karein)<br>
+        4. Commit karein &#8594; ~30 second baad, dashboard kholने wale HAR user ko is tab me sirf yahi item codes dikhenge
+      </div>
+      <button class="btn g" onclick="savePlasterCfg()">Save Config &amp; Download</button>
+      <button class="btn" onclick="togglePlasterCfg()">Cancel</button>
+    </div>
+    <div class="tw" id="pt"></div>
+  </div>
 </div>
+
+<div id="plasterPrintArea"></div>
 
 </div><!-- /wrap -->
 <script>
-let D=[],CH={},RAW=[],RC=[],FN='',DATES=[];
+let D=[],CH={},RAW=[],RC=[],FN='',DATES=[],PCFG=[];
 
 // ---- Hidden "upload new data" access ----
 // No visible button on purpose. Two secret ways to reach the upload screen:
@@ -213,6 +251,10 @@ document.addEventListener('keydown',function(e){
 window.onload=async function(){
   sp(20,'Loading latest data...','Fetching from server');
   try{
+    try{
+      const pres=await fetch('./plaster_config.json?t='+Date.now());
+      if(pres.ok){ const pj=await pres.json(); PCFG=(pj.itemCodes||[]).map(c=>(c+'').trim().toUpperCase()).filter(Boolean); }
+    }catch(e){}
     let idx=null;
     try{
       const ires=await fetch('./index.json?t='+Date.now());
@@ -469,7 +511,7 @@ function build(fname,meta){
     {l:'Expired Stock',v:inr(expV),c:'red'},
     {l:'Near Expiry ≤6M',v:inr(nearV),c:'org'},
   ].map(k=>'<div class="kpi '+k.c+'"><div class="kl">'+k.l+'</div><div class="kv">'+k.v+'</div></div>').join('');
-  charts(); locF(); rL(); expF(); rE(); fullF(); rawF();
+  charts(); locF(); rL(); expF(); rE(); fullF(); rawF(); plasterF();
 }
 
 function charts(){
@@ -556,8 +598,76 @@ function st(i){
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('on',i===j));
   document.querySelectorAll('.tp').forEach((p,j)=>p.classList.toggle('on',i===j));
   if(i===0) setTimeout(()=>{Object.values(CH).forEach(c=>{try{c.resize()}catch(e){}});},60);
-  if(i===3) rF(); if(i===4) rR();
+  if(i===3) rF(); if(i===4) rR(); if(i===5) rP();
 }
+
+// ---- Printed Plaster tab ----
+let selPlaster=new Set();
+function plasterKey(r){return r.LOCCD+'|'+r.STORENAME+'|'+r.ITEMCD+'|'+r.BTREFNO;}
+function plasterRows(){
+  if(PCFG.length) return D.filter(r=>PCFG.includes(r.ITEMCD.toUpperCase()));
+  return D.filter(r=>r.ITEMNAME.toLowerCase().includes('plaster'));
+}
+function togglePlasterCfg(){
+  const p=document.getElementById('pCfgPanel');
+  const show=p.style.display==='none'||!p.style.display;
+  p.style.display=show?'block':'none';
+  if(show) document.getElementById('pCfgInput').value=PCFG.join(', ');
+}
+function savePlasterCfg(){
+  const raw=document.getElementById('pCfgInput').value;
+  const codes=[...new Set(raw.split(/[,\n]/).map(s=>s.trim().toUpperCase()).filter(Boolean))];
+  if(!codes.length){alert('Kripya kam se kam ek Item Code enter karein.');return;}
+  PCFG=codes;
+  downloadBlob(JSON.stringify({itemCodes:codes,updated:new Date().toISOString()}),'plaster_config.json');
+  document.getElementById('pCfgPanel').style.display='none';
+  plasterF();
+  alert('plaster_config.json download ho gayi hai. Ise apne GitHub repo me upload/replace karein (data.json ki tarah) — commit karne ke ~30 second baad ye sabke liye is tab me apply ho jaayega.');
+}
+function plasterF(){
+  const l=[...new Set(plasterRows().map(r=>r.LOCCD))].sort();
+  document.getElementById('lfP').innerHTML='<option value="">All Locations</option>'+l.map(x=>'<option>'+x+'</option>').join('');
+  selPlaster=new Set();
+  rP();
+}
+function rP(){
+  const s=document.getElementById('sbP').value.toLowerCase(), loc=document.getElementById('lfP').value;
+  let rows=plasterRows();
+  if(s) rows=rows.filter(r=>r.ITEMNAME.toLowerCase().includes(s)||r.STORENAME.toLowerCase().includes(s)||r.BTREFNO.toLowerCase().includes(s)||r.ITEMCD.toLowerCase().includes(s));
+  if(loc) rows=rows.filter(r=>r.LOCCD===loc);
+  document.getElementById('pc2').textContent=rows.length.toLocaleString()+' plaster records &#183; '+selPlaster.size+' selected';
+  let h='<table><thead><tr><th style="width:34px;text-align:center"><input type="checkbox" class="pchk" id="pAllChk" onchange="togglePlasterAll(this.checked)"></th><th style="width:58px">Loc</th><th style="width:148px">Store</th><th style="width:74px;text-align:center">Type</th><th style="width:106px">Item Code</th><th>Item Name</th><th style="width:104px">Batch No</th><th style="width:74px;text-align:center">Mfg Date</th><th style="width:74px;text-align:center">Exp Date</th><th style="width:88px">Status</th><th style="width:64px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
+  rows.forEach(r=>{const k=plasterKey(r),ck=selPlaster.has(k);h+='<tr><td style="text-align:center"><input type="checkbox" class="pchk" data-k="'+k.replace(/"/g,'&quot;')+'" '+(ck?'checked':'')+' onchange="onPlasterCheck(this)"></td><td style="font-weight:700;color:#1F3864">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+r.STORE_TYPE+'</span></td><td style="font-size:12px;color:#64748B">'+r.ITEMCD+'</td><td style="font-size:12px">'+r.ITEMNAME+'</td><td style="font-size:12px;font-family:monospace;color:#475569">'+r.BTREFNO+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
+  if(!rows.length) h+='<tr><td colspan="12" style="text-align:center;color:#64748B;padding:20px">No plaster items found.</td></tr>';
+  h+='</tbody></table>'; document.getElementById('pt').innerHTML=h;
+}
+function onPlasterCheck(el){
+  const k=el.getAttribute('data-k');
+  if(el.checked) selPlaster.add(k); else selPlaster.delete(k);
+  document.getElementById('pc2').textContent=document.getElementById('pc2').textContent.replace(/\d+ selected/,selPlaster.size+' selected');
+}
+function togglePlasterAll(state){
+  const s=document.getElementById('sbP').value.toLowerCase(), loc=document.getElementById('lfP').value;
+  let rows=plasterRows();
+  if(s) rows=rows.filter(r=>r.ITEMNAME.toLowerCase().includes(s)||r.STORENAME.toLowerCase().includes(s)||r.BTREFNO.toLowerCase().includes(s)||r.ITEMCD.toLowerCase().includes(s));
+  if(loc) rows=rows.filter(r=>r.LOCCD===loc);
+  rows.forEach(r=>{const k=plasterKey(r); if(state) selPlaster.add(k); else selPlaster.delete(k);});
+  rP();
+}
+function printPlaster(){
+  const rows=plasterRows().filter(r=>selPlaster.has(plasterKey(r)));
+  if(!rows.length){alert('Kripya print karne ke liye kam se kam ek item select karein.');return;}
+  const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  let h='<div class="pph"><h2>&#129604; Printed Plaster Stock Report</h2><p>'+(document.getElementById('fn')?document.getElementById('fn').textContent:'')+' &#183; Generated: '+new Date().toLocaleString('en-IN')+' &#183; '+rows.length+' item(s) selected</p></div>';
+  h+='<table><thead><tr><th>Loc</th><th>Store</th><th>Type</th><th>Item Code</th><th>Item Name</th><th>Batch No</th><th>Mfg Date</th><th>Exp Date</th><th>Status</th><th style="text-align:right">Qty</th><th style="text-align:right">Value</th></tr></thead><tbody>';
+  rows.forEach(r=>{h+='<tr><td>'+r.LOCCD+'</td><td>'+r.STORENAME+'</td><td>'+r.STORE_TYPE+'</td><td>'+r.ITEMCD+'</td><td>'+r.ITEMNAME+'</td><td>'+r.BTREFNO+'</td><td>'+r.MNFMMYY+'</td><td>'+r.EXPMMYY+'</td><td>'+r.EXP_CAT+'</td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right">'+inr(r.CLSTKVAL)+'</td></tr>';});
+  h+='<tr style="font-weight:700;background:#F1F5F9"><td colspan="9" style="text-align:right">TOTAL</td><td style="text-align:right">'+num(tQ)+'</td><td style="text-align:right">'+inr(tV)+'</td></tr>';
+  h+='</tbody></table>';
+  document.getElementById('plasterPrintArea').innerHTML=h;
+  document.body.classList.add('printing-plaster');
+  window.print();
+}
+window.addEventListener('afterprint',()=>{document.body.classList.remove('printing-plaster');});
 
 function dlExcel(){
   if(!D.length) return;
