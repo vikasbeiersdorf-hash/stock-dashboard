@@ -559,10 +559,11 @@ function rL(){
   src.forEach(r=>{if(!m[r.LOCCD])m[r.LOCCD]={n:r.LOCNAME,s:new Set(),t:new Set(),q:0,v:0};m[r.LOCCD].s.add(r.STORENAME);m[r.LOCCD].t.add(r.STORE_TYPE);m[r.LOCCD].q+=r.CLSTKQTY;m[r.LOCCD].v+=r.CLSTKVAL;});
   const tot=Object.values(m).reduce((s,v)=>s+v.v,0), rows=Object.entries(m).sort((a,b)=>b[1].v-a[1].v);
   document.getElementById('lc2').textContent=rows.length+' locations';
-  let h='<table><thead><tr><th style="width:75px">Loc Code</th><th>Location Name</th><th style="width:82px;text-align:center">Type</th><th style="width:64px;text-align:center">Stores</th><th style="width:112px;text-align:right">Total Qty</th><th style="width:145px;text-align:right">Stock Value</th><th style="width:115px">% Share</th></tr></thead><tbody>';
-  rows.forEach(function(arr){var c=arr[0],d=arr[1];var p=tot?(d.v/tot*100).toFixed(1):'0';h+='<tr><td style="font-weight:700;color:#1F3864">'+c+'</td><td>'+d.n+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+[...d.t].join(',')+'</span></td><td style="text-align:center">'+d.s.size+'</td><td style="text-align:right">'+num(d.q)+'</td><td style="text-align:right;font-weight:600">'+inr(d.v)+'</td><td><div style="font-size:11px;color:#64748B">'+p+'%</div><div class="pb"><div class="pf" style="width:'+Math.min(p,100)+'%"></div></div></td></tr>';});
   var tt=rows.reduce(function(s,arr){return{q:s.q+arr[1].q,v:s.v+arr[1].v};},{q:0,v:0});
-  h+='<tr style="background:#1F3864"><td colspan="4" style="color:#fff;font-weight:700">TOTAL</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tt.q)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tt.v)+'</td><td style="color:#fff">100%</td></tr></tbody></table>';
+  let h='<table><thead><tr><th style="width:75px">Loc Code</th><th>Location Name</th><th style="width:82px;text-align:center">Type</th><th style="width:64px;text-align:center">Stores</th><th style="width:112px;text-align:right">Total Qty</th><th style="width:145px;text-align:right">Stock Value</th><th style="width:115px">% Share</th></tr></thead><tbody>';
+  h+='<tr style="background:#1F3864"><td colspan="4" style="color:#fff;font-weight:700">TOTAL ('+rows.length+' location'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tt.q)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tt.v)+'</td><td style="color:#fff">100%</td></tr>';
+  rows.forEach(function(arr){var c=arr[0],d=arr[1];var p=tot?(d.v/tot*100).toFixed(1):'0';h+='<tr><td style="font-weight:700;color:#1F3864">'+c+'</td><td>'+d.n+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+[...d.t].join(',')+'</span></td><td style="text-align:center">'+d.s.size+'</td><td style="text-align:right">'+num(d.q)+'</td><td style="text-align:right;font-weight:600">'+inr(d.v)+'</td><td><div style="font-size:11px;color:#64748B">'+p+'%</div><div class="pb"><div class="pf" style="width:'+Math.min(p,100)+'%"></div></div></td></tr>';});
+  h+='</tbody></table>';
   document.getElementById('lt').innerHTML=h;
 }
 
@@ -572,8 +573,10 @@ function rE(){
   let rows=D.filter(r=>r.MTHS2EXP<=12);
   if(cat) rows=rows.filter(r=>r.EXP_CAT===cat); if(loc) rows=rows.filter(r=>r.LOCCD===loc);
   rows.sort((a,b)=>a.MTHS2EXP-b.MTHS2EXP);
-  document.getElementById('ec2').textContent=rows.length.toLocaleString()+' records';
+  const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  document.getElementById('ec2').textContent=rows.length.toLocaleString()+' records &#183; Total Qty: '+num(tQ)+' &#183; Total Value: '+inr(tV);
   let h='<table><thead><tr><th style="width:105px">Category</th><th style="width:60px">Loc</th><th style="width:155px">Store</th><th>Item Name</th><th style="width:95px">Batch No</th><th style="width:76px;text-align:center">Mfg Date</th><th style="width:76px;text-align:center">Exp Date</th><th style="width:52px;text-align:center">Mths</th><th style="width:66px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
+  h+='<tr style="background:#1F3864"><td colspan="8" style="color:#fff;font-weight:700;text-align:right">TOTAL ('+rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tQ)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tV)+'</td></tr>';
   rows.slice(0,500).forEach(r=>{var mc=r.MTHS2EXP<0?'#C00000':r.MTHS2EXP<=3?'#8B4000':'#1a1a1a';h+='<tr><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="font-weight:600">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME.slice(0,22)+'</td><td style="font-size:12px">'+r.ITEMNAME.slice(0,40)+'</td><td style="font-size:11px;font-family:monospace;color:#475569">'+r.BTREFNO.slice(0,14)+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td style="text-align:center;font-weight:700;color:'+mc+'">'+r.MTHS2EXP+'</td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
   if(rows.length>500) h+='<tr><td colspan="10" style="text-align:center;color:#64748B;padding:10px">...'+(rows.length-500)+' more records.</td></tr>';
   h+='</tbody></table>'; document.getElementById('et').innerHTML=h;
@@ -592,9 +595,9 @@ function rF(){
   const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
   document.getElementById('fc2').textContent=rows.length.toLocaleString()+' records &#183; Total Qty: '+num(tQ)+' &#183; Total Value: '+inr(tV);
   let h='<table><thead><tr><th style="width:58px">Loc</th><th style="width:148px">Store</th><th style="width:74px;text-align:center">Type</th><th style="width:106px">Item Code</th><th>Item Name</th><th style="width:104px">Batch No</th><th style="width:74px;text-align:center">Mfg Date</th><th style="width:74px;text-align:center">Exp Date</th><th style="width:88px">Status</th><th style="width:64px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
+  h+='<tr style="background:#1F3864"><td colspan="9" style="color:#fff;font-weight:700;text-align:right">TOTAL ('+rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tQ)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tV)+'</td></tr>';
   rows.slice(0,500).forEach(r=>{h+='<tr><td style="font-weight:700;color:#1F3864">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME.slice(0,22)+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+r.STORE_TYPE+'</span></td><td style="font-size:12px;color:#64748B">'+r.ITEMCD+'</td><td style="font-size:12px">'+r.ITEMNAME.slice(0,40)+'</td><td style="font-size:12px;font-family:monospace;color:#475569">'+r.BTREFNO+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
   if(rows.length>500) h+='<tr><td colspan="11" style="text-align:center;color:#64748B;padding:10px">...'+(rows.length-500)+' more. Use filters.</td></tr>';
-  h+='<tr style="background:#1F3864"><td colspan="9" style="color:#fff;font-weight:700;text-align:right">TOTAL (filtered &#8212; '+rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tQ)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tV)+'</td></tr>';
   h+='</tbody></table>'; document.getElementById('ft').innerHTML=h;
 }
 
@@ -622,15 +625,15 @@ function rR(){
   if(valCol&&totals[valCol]!==undefined) cnt+=' &#183; Total Value: '+inr(totals[valCol]);
   document.getElementById('rc2').textContent=cnt;
   let h='<table><thead><tr>'+cols.map(c=>'<th style="white-space:nowrap;font-size:11px">'+c+'</th>').join('')+'</tr></thead><tbody>';
-  rows.slice(0,500).forEach(r=>{h+='<tr>'+cols.map(c=>'<td style="font-size:12px;white-space:nowrap;'+(numCols.includes(c)?'text-align:right':'')+'">'+(r[c]!==undefined?r[c]:'')+'</td>').join('')+'</tr>';});
-  if(rows.length>500) h+='<tr><td colspan="'+cols.length+'" style="text-align:center;color:#64748B;padding:10px;font-size:12px">...'+(rows.length-500)+' more records.</td></tr>';
   if(numCols.length){
     h+='<tr style="background:#1F3864">'+cols.map((c,i)=>{
-      if(i===0) return '<td style="color:#fff;font-weight:700;white-space:nowrap">TOTAL (filtered)</td>';
+      if(i===0) return '<td style="color:#fff;font-weight:700;white-space:nowrap">TOTAL ('+rows.length.toLocaleString()+')</td>';
       if(numCols.includes(c)) return '<td style="color:#fff;font-weight:700;text-align:right;white-space:nowrap">'+num(totals[c])+'</td>';
       return '<td></td>';
     }).join('')+'</tr>';
   }
+  rows.slice(0,500).forEach(r=>{h+='<tr>'+cols.map(c=>'<td style="font-size:12px;white-space:nowrap;'+(numCols.includes(c)?'text-align:right':'')+'">'+(r[c]!==undefined?r[c]:'')+'</td>').join('')+'</tr>';});
+  if(rows.length>500) h+='<tr><td colspan="'+cols.length+'" style="text-align:center;color:#64748B;padding:10px;font-size:12px">...'+(rows.length-500)+' more records.</td></tr>';
   h+='</tbody></table>'; document.getElementById('rt').innerHTML=h;
 }
 
@@ -675,8 +678,10 @@ function rP(){
   let rows=plasterRows();
   if(s) rows=rows.filter(r=>r.ITEMNAME.toLowerCase().includes(s)||r.STORENAME.toLowerCase().includes(s)||r.BTREFNO.toLowerCase().includes(s)||r.ITEMCD.toLowerCase().includes(s));
   if(loc) rows=rows.filter(r=>r.LOCCD===loc);
-  document.getElementById('pc2').textContent=rows.length.toLocaleString()+' plaster records &#183; '+selPlaster.size+' selected';
+  const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  document.getElementById('pc2').textContent=rows.length.toLocaleString()+' plaster records &#183; '+selPlaster.size+' selected &#183; Total Qty: '+num(tQ)+' &#183; Total Value: '+inr(tV);
   let h='<table><thead><tr><th style="width:34px;text-align:center"><input type="checkbox" class="pchk" id="pAllChk" onchange="togglePlasterAll(this.checked)"></th><th style="width:58px">Loc</th><th style="width:148px">Store</th><th style="width:74px;text-align:center">Type</th><th style="width:106px">Item Code</th><th>Item Name</th><th style="width:104px">Batch No</th><th style="width:74px;text-align:center">Mfg Date</th><th style="width:74px;text-align:center">Exp Date</th><th style="width:88px">Status</th><th style="width:64px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
+  if(rows.length) h+='<tr style="background:#1F3864"><td colspan="10" style="color:#fff;font-weight:700;text-align:right">TOTAL ('+rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tQ)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tV)+'</td></tr>';
   rows.forEach(r=>{const k=plasterKey(r),ck=selPlaster.has(k);h+='<tr><td style="text-align:center"><input type="checkbox" class="pchk" data-k="'+k.replace(/"/g,'&quot;')+'" '+(ck?'checked':'')+' onchange="onPlasterCheck(this)"></td><td style="font-weight:700;color:#1F3864">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+r.STORE_TYPE+'</span></td><td style="font-size:12px;color:#64748B">'+r.ITEMCD+'</td><td style="font-size:12px">'+r.ITEMNAME+'</td><td style="font-size:12px;font-family:monospace;color:#475569">'+r.BTREFNO+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
   if(!rows.length) h+='<tr><td colspan="12" style="text-align:center;color:#64748B;padding:20px">No plaster items found.</td></tr>';
   h+='</tbody></table>'; document.getElementById('pt').innerHTML=h;
