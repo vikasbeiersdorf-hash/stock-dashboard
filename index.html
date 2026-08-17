@@ -498,7 +498,9 @@ function parse(buf){
 }
 function parseRaw(buf){
   const wb=XLSX.read(buf,{type:'array'}),ws=wb.Sheets[wb.SheetNames[0]];
-  const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false});
+  // raw:true keeps the actual underlying cell values (full precision numbers) instead of
+  // Excel's display-formatted strings, which was rounding/truncating quantities on export.
+  const rows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
   if(!rows.length) return [];
   RC=Object.keys(rows[0]);
   return rows;
@@ -587,10 +589,12 @@ function rF(){
   let rows=D;
   if(s) rows=rows.filter(r=>r.ITEMNAME.toLowerCase().includes(s)||r.STORENAME.toLowerCase().includes(s)||r.ITEMCD.toLowerCase().includes(s)||r.BTREFNO.toLowerCase().includes(s));
   if(tp) rows=rows.filter(r=>r.STORE_TYPE===tp); if(loc) rows=rows.filter(r=>r.LOCCD===loc);
-  document.getElementById('fc2').textContent=rows.length.toLocaleString()+' records';
+  const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  document.getElementById('fc2').textContent=rows.length.toLocaleString()+' records &#183; Total Qty: '+num(tQ)+' &#183; Total Value: '+inr(tV);
   let h='<table><thead><tr><th style="width:58px">Loc</th><th style="width:148px">Store</th><th style="width:74px;text-align:center">Type</th><th style="width:106px">Item Code</th><th>Item Name</th><th style="width:104px">Batch No</th><th style="width:74px;text-align:center">Mfg Date</th><th style="width:74px;text-align:center">Exp Date</th><th style="width:88px">Status</th><th style="width:64px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
   rows.slice(0,500).forEach(r=>{h+='<tr><td style="font-weight:700;color:#1F3864">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME.slice(0,22)+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+r.STORE_TYPE+'</span></td><td style="font-size:12px;color:#64748B">'+r.ITEMCD+'</td><td style="font-size:12px">'+r.ITEMNAME.slice(0,40)+'</td><td style="font-size:12px;font-family:monospace;color:#475569">'+r.BTREFNO+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
   if(rows.length>500) h+='<tr><td colspan="11" style="text-align:center;color:#64748B;padding:10px">...'+(rows.length-500)+' more. Use filters.</td></tr>';
+  h+='<tr style="background:#1F3864"><td colspan="9" style="color:#fff;font-weight:700;text-align:right">TOTAL (filtered &#8212; '+rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tQ)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tV)+'</td></tr>';
   h+='</tbody></table>'; document.getElementById('ft').innerHTML=h;
 }
 
@@ -600,17 +604,33 @@ function rawF(){
   document.getElementById('sf2').innerHTML='<option value="">All Store Types</option>'+t.map(x=>'<option>'+x+'</option>').join('');
   rR();
 }
+function rawNum(v){if(v===undefined||v===null||v==='')return NaN;const n=typeof v==='string'?parseFloat(v.replace(/,/g,'')):+v;return isNaN(n)?NaN:n;}
 function rR(){
   if(!RAW.length){document.getElementById('rt').innerHTML='<div style="padding:30px;text-align:center;color:#64748B;font-size:13px">Raw data not available.</div>';return;}
   const s=document.getElementById('sb2').value.toLowerCase(), loc=document.getElementById('lf3').value, stp=document.getElementById('sf2').value;
   let rows=RAW;
   if(loc||stp){const vi=new Set();D.forEach((r,i)=>{if((!loc||r.LOCCD===loc)&&(!stp||r.STORE_TYPE===stp))vi.add(i);});rows=RAW.filter((_,i)=>vi.has(i));}
   if(s) rows=rows.filter(r=>Object.values(r).some(v=>(v+'').toLowerCase().includes(s)));
-  document.getElementById('rc2').textContent=rows.length.toLocaleString()+' records';
   const cols=RC.length?RC:(rows.length?Object.keys(rows[0]):[]);
+  // figure out which columns are fully numeric across the filtered rows, so we can total them
+  const numCols=cols.filter(c=>rows.length && rows.every(r=>r[c]===undefined||r[c]===''||!isNaN(rawNum(r[c]))));
+  const totals={}; numCols.forEach(c=>{totals[c]=rows.reduce((s,r)=>s+(isNaN(rawNum(r[c]))?0:rawNum(r[c])),0);});
+  const qtyCol=cols.find(c=>/^CLSTKQTY$/i.test(c))||cols.find(c=>/QTY/i.test(c));
+  const valCol=cols.find(c=>/^CLSTKVAL$/i.test(c))||cols.find(c=>/VAL/i.test(c));
+  let cnt=rows.length.toLocaleString()+' records';
+  if(qtyCol&&totals[qtyCol]!==undefined) cnt+=' &#183; Total Qty: '+num(totals[qtyCol]);
+  if(valCol&&totals[valCol]!==undefined) cnt+=' &#183; Total Value: '+inr(totals[valCol]);
+  document.getElementById('rc2').textContent=cnt;
   let h='<table><thead><tr>'+cols.map(c=>'<th style="white-space:nowrap;font-size:11px">'+c+'</th>').join('')+'</tr></thead><tbody>';
-  rows.slice(0,500).forEach(r=>{h+='<tr>'+cols.map(c=>'<td style="font-size:12px;white-space:nowrap">'+(r[c]!==undefined?r[c]:'')+'</td>').join('')+'</tr>';});
+  rows.slice(0,500).forEach(r=>{h+='<tr>'+cols.map(c=>'<td style="font-size:12px;white-space:nowrap;'+(numCols.includes(c)?'text-align:right':'')+'">'+(r[c]!==undefined?r[c]:'')+'</td>').join('')+'</tr>';});
   if(rows.length>500) h+='<tr><td colspan="'+cols.length+'" style="text-align:center;color:#64748B;padding:10px;font-size:12px">...'+(rows.length-500)+' more records.</td></tr>';
+  if(numCols.length){
+    h+='<tr style="background:#1F3864">'+cols.map((c,i)=>{
+      if(i===0) return '<td style="color:#fff;font-weight:700;white-space:nowrap">TOTAL (filtered)</td>';
+      if(numCols.includes(c)) return '<td style="color:#fff;font-weight:700;text-align:right;white-space:nowrap">'+num(totals[c])+'</td>';
+      return '<td></td>';
+    }).join('')+'</tr>';
+  }
   h+='</tbody></table>'; document.getElementById('rt').innerHTML=h;
 }
 
