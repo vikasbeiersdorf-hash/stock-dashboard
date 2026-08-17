@@ -60,6 +60,9 @@ header h1{font-size:15px;font-weight:700}
 @media(max-width:660px){.cg{grid-template-columns:1fr}}
 .cc{background:#F8FAFD;border-radius:8px;border:1px solid #E2E8F0;padding:13px}
 .cc h3{font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.totbar{background:#1F3864;color:#fff;padding:9px 14px;border-radius:8px;font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 20px;margin-bottom:8px}
+.totbar span.tl{opacity:.75;font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:.04em;margin-right:6px}
+.totbar span.tv{font-size:14px}
 .tw{overflow:auto;border-radius:8px;border:1px solid #E2E8F0;max-height:420px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:#1F3864;color:#fff;padding:8px 11px;text-align:left;font-size:11px;font-weight:600;position:sticky;top:0;white-space:nowrap}
@@ -184,14 +187,15 @@ td{padding:7px 11px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
     </div>
     <div class="cc" style="margin-top:14px"><h3>Top 10 Items by Stock Value</h3><div id="tw" style="position:relative"><canvas id="tc"></canvas></div></div>
   </div>
-  <div class="tp" id="tp1"><div class="fb"><select id="sf1" onchange="rL()"><option value="">All Store Types</option></select><span class="cnt" id="lc2"></span></div><div class="tw" id="lt"></div></div>
+  <div class="tp" id="tp1"><div class="fb"><select id="sf1" onchange="rL()"><option value="">All Store Types</option></select><span class="cnt" id="lc2"></span></div><div class="totbar" id="lTot"></div><div class="tw" id="lt"></div></div>
   <div class="tp" id="tp2">
     <div style="background:#FFF3F3;border:1px solid #FFCCCC;border-radius:7px;padding:8px 13px;margin-bottom:10px;font-size:13px;color:#8B0000"><strong>&#9888; Action Required</strong> &#8212; Items expired or expiring within 12 months.</div>
     <div class="fb"><select id="ef" onchange="rE()"><option value="">All Categories</option><option>Expired</option><option>0-3 Months</option><option>3-6 Months</option><option>6-12 Months</option></select><select id="lf1" onchange="rE()"><option value="">All Locations</option></select><span class="cnt" id="ec2"></span></div>
+    <div class="totbar" id="eTot"></div>
     <div class="tw" id="et"></div>
   </div>
-  <div class="tp" id="tp3"><div class="fb"><input type="text" id="sb" placeholder="Search by item name, store, item code or batch no..." oninput="rF()"><select id="stf" onchange="rF()"><option value="">All Store Types</option></select><select id="lf2" onchange="rF()"><option value="">All Locations</option></select><span class="cnt" id="fc2"></span></div><div class="tw" id="ft"></div></div>
-  <div class="tp" id="tp4"><div class="fb"><input type="text" id="sb2" placeholder="Search any column..." oninput="rR()"><select id="lf3" onchange="rR()"><option value="">All Locations</option></select><select id="sf2" onchange="rR()"><option value="">All Store Types</option></select><span class="cnt" id="rc2"></span><button class="btn g" onclick="dlRawExcel()" title="Download filtered data as Excel">&#8595; Excel</button><button class="btn" onclick="dlRawCSV()" title="Download filtered data as CSV">&#8595; CSV</button></div><div class="tw" id="rt"></div></div>
+  <div class="tp" id="tp3"><div class="fb"><input type="text" id="sb" placeholder="Search by item name, store, item code or batch no..." oninput="rF()"><select id="stf" onchange="rF()"><option value="">All Store Types</option></select><select id="lf2" onchange="rF()"><option value="">All Locations</option></select><span class="cnt" id="fc2"></span></div><div class="totbar" id="fTot"></div><div class="tw" id="ft"></div></div>
+  <div class="tp" id="tp4"><div class="fb"><input type="text" id="sb2" placeholder="Search any column..." oninput="rR()"><select id="lf3" onchange="rR()"><option value="">All Locations</option></select><select id="sf2" onchange="rR()"><option value="">All Store Types</option></select><span class="cnt" id="rc2"></span><button class="btn g" onclick="dlRawExcel()" title="Download filtered data as Excel">&#8595; Excel</button><button class="btn" onclick="dlRawCSV()" title="Download filtered data as CSV">&#8595; CSV</button></div><div class="totbar" id="rTot"></div><div class="tw" id="rt"></div></div>
   <div class="tp" id="tp5">
     <div class="fb">
       <input type="text" id="sbP" placeholder="Search plaster item, store or batch no..." oninput="rP()">
@@ -202,6 +206,7 @@ td{padding:7px 11px;border-bottom:1px solid #E2E8F0;vertical-align:middle}
       <button class="btn g" onclick="printPlaster()">&#128438; Print Selected</button>
       <button class="btn" id="pCfgBtn" onclick="togglePlasterCfg()" style="display:none">&#9881; Set Item Codes</button>
     </div>
+    <div class="totbar" id="pTot"></div>
     <div id="pCfgPanel" style="display:none;background:#F8FAFD;border:1px solid #E2E8F0;border-radius:8px;padding:14px;margin-bottom:12px">
       <div style="font-size:12px;color:#1F3864;font-weight:700;margin-bottom:6px">Yahan jo Item Codes daloge, sirf unhi ka data is tab me sabke liye dikhega</div>
       <textarea id="pCfgInput" rows="3" style="width:100%;padding:8px;border:1px solid #CBD5E1;border-radius:6px;font-size:13px;font-family:monospace" placeholder="e.g. ITM001, ITM002, ITM003 (comma ya nayi line se alag karke likhein)"></textarea>
@@ -560,8 +565,8 @@ function rL(){
   const tot=Object.values(m).reduce((s,v)=>s+v.v,0), rows=Object.entries(m).sort((a,b)=>b[1].v-a[1].v);
   document.getElementById('lc2').textContent=rows.length+' locations';
   var tt=rows.reduce(function(s,arr){return{q:s.q+arr[1].q,v:s.v+arr[1].v};},{q:0,v:0});
+  document.getElementById('lTot').innerHTML='<span><span class="tl">Locations</span><span class="tv">'+rows.length+'</span></span><span><span class="tl">Total Qty</span><span class="tv">'+num(tt.q)+'</span></span><span><span class="tl">Total Value</span><span class="tv">'+inr(tt.v)+'</span></span>';
   let h='<table><thead><tr><th style="width:75px">Loc Code</th><th>Location Name</th><th style="width:82px;text-align:center">Type</th><th style="width:64px;text-align:center">Stores</th><th style="width:112px;text-align:right">Total Qty</th><th style="width:145px;text-align:right">Stock Value</th><th style="width:115px">% Share</th></tr></thead><tbody>';
-  h+='<tr style="background:#1F3864"><td colspan="4" style="color:#fff;font-weight:700">TOTAL ('+rows.length+' location'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tt.q)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tt.v)+'</td><td style="color:#fff">100%</td></tr>';
   rows.forEach(function(arr){var c=arr[0],d=arr[1];var p=tot?(d.v/tot*100).toFixed(1):'0';h+='<tr><td style="font-weight:700;color:#1F3864">'+c+'</td><td>'+d.n+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+[...d.t].join(',')+'</span></td><td style="text-align:center">'+d.s.size+'</td><td style="text-align:right">'+num(d.q)+'</td><td style="text-align:right;font-weight:600">'+inr(d.v)+'</td><td><div style="font-size:11px;color:#64748B">'+p+'%</div><div class="pb"><div class="pf" style="width:'+Math.min(p,100)+'%"></div></div></td></tr>';});
   h+='</tbody></table>';
   document.getElementById('lt').innerHTML=h;
@@ -573,10 +578,10 @@ function rE(){
   let rows=D.filter(r=>r.MTHS2EXP<=12);
   if(cat) rows=rows.filter(r=>r.EXP_CAT===cat); if(loc) rows=rows.filter(r=>r.LOCCD===loc);
   rows.sort((a,b)=>a.MTHS2EXP-b.MTHS2EXP);
-  const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
-  document.getElementById('ec2').textContent=rows.length.toLocaleString()+' records &#183; Total Qty: '+num(tQ)+' &#183; Total Value: '+inr(tV);
+  document.getElementById('ec2').textContent=rows.length.toLocaleString()+' records';
+  const eTQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), eTV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  document.getElementById('eTot').innerHTML='<span><span class="tl">Records</span><span class="tv">'+rows.length.toLocaleString()+'</span></span><span><span class="tl">Total Qty</span><span class="tv">'+num(eTQ)+'</span></span><span><span class="tl">Total Value</span><span class="tv">'+inr(eTV)+'</span></span>';
   let h='<table><thead><tr><th style="width:105px">Category</th><th style="width:60px">Loc</th><th style="width:155px">Store</th><th>Item Name</th><th style="width:95px">Batch No</th><th style="width:76px;text-align:center">Mfg Date</th><th style="width:76px;text-align:center">Exp Date</th><th style="width:52px;text-align:center">Mths</th><th style="width:66px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
-  h+='<tr style="background:#1F3864"><td colspan="8" style="color:#fff;font-weight:700;text-align:right">TOTAL ('+rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tQ)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tV)+'</td></tr>';
   rows.slice(0,500).forEach(r=>{var mc=r.MTHS2EXP<0?'#C00000':r.MTHS2EXP<=3?'#8B4000':'#1a1a1a';h+='<tr><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="font-weight:600">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME.slice(0,22)+'</td><td style="font-size:12px">'+r.ITEMNAME.slice(0,40)+'</td><td style="font-size:11px;font-family:monospace;color:#475569">'+r.BTREFNO.slice(0,14)+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td style="text-align:center;font-weight:700;color:'+mc+'">'+r.MTHS2EXP+'</td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
   if(rows.length>500) h+='<tr><td colspan="10" style="text-align:center;color:#64748B;padding:10px">...'+(rows.length-500)+' more records.</td></tr>';
   h+='</tbody></table>'; document.getElementById('et').innerHTML=h;
@@ -592,10 +597,10 @@ function rF(){
   let rows=D;
   if(s) rows=rows.filter(r=>r.ITEMNAME.toLowerCase().includes(s)||r.STORENAME.toLowerCase().includes(s)||r.ITEMCD.toLowerCase().includes(s)||r.BTREFNO.toLowerCase().includes(s));
   if(tp) rows=rows.filter(r=>r.STORE_TYPE===tp); if(loc) rows=rows.filter(r=>r.LOCCD===loc);
-  const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
-  document.getElementById('fc2').textContent=rows.length.toLocaleString()+' records &#183; Total Qty: '+num(tQ)+' &#183; Total Value: '+inr(tV);
+  document.getElementById('fc2').textContent=rows.length.toLocaleString()+' records';
+  const fTQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), fTV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  document.getElementById('fTot').innerHTML='<span><span class="tl">Records</span><span class="tv">'+rows.length.toLocaleString()+'</span></span><span><span class="tl">Total Qty</span><span class="tv">'+num(fTQ)+'</span></span><span><span class="tl">Total Value</span><span class="tv">'+inr(fTV)+'</span></span>';
   let h='<table><thead><tr><th style="width:58px">Loc</th><th style="width:148px">Store</th><th style="width:74px;text-align:center">Type</th><th style="width:106px">Item Code</th><th>Item Name</th><th style="width:104px">Batch No</th><th style="width:74px;text-align:center">Mfg Date</th><th style="width:74px;text-align:center">Exp Date</th><th style="width:88px">Status</th><th style="width:64px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
-  h+='<tr style="background:#1F3864"><td colspan="9" style="color:#fff;font-weight:700;text-align:right">TOTAL ('+rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tQ)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tV)+'</td></tr>';
   rows.slice(0,500).forEach(r=>{h+='<tr><td style="font-weight:700;color:#1F3864">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME.slice(0,22)+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+r.STORE_TYPE+'</span></td><td style="font-size:12px;color:#64748B">'+r.ITEMCD+'</td><td style="font-size:12px">'+r.ITEMNAME.slice(0,40)+'</td><td style="font-size:12px;font-family:monospace;color:#475569">'+r.BTREFNO+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
   if(rows.length>500) h+='<tr><td colspan="11" style="text-align:center;color:#64748B;padding:10px">...'+(rows.length-500)+' more. Use filters.</td></tr>';
   h+='</tbody></table>'; document.getElementById('ft').innerHTML=h;
@@ -609,30 +614,22 @@ function rawF(){
 }
 function rawNum(v){if(v===undefined||v===null||v==='')return NaN;const n=typeof v==='string'?parseFloat(v.replace(/,/g,'')):+v;return isNaN(n)?NaN:n;}
 function rR(){
-  if(!RAW.length){document.getElementById('rt').innerHTML='<div style="padding:30px;text-align:center;color:#64748B;font-size:13px">Raw data not available.</div>';return;}
+  if(!RAW.length){document.getElementById('rt').innerHTML='<div style="padding:30px;text-align:center;color:#64748B;font-size:13px">Raw data not available.</div>';document.getElementById('rTot').innerHTML='';return;}
   const s=document.getElementById('sb2').value.toLowerCase(), loc=document.getElementById('lf3').value, stp=document.getElementById('sf2').value;
   let rows=RAW;
   if(loc||stp){const vi=new Set();D.forEach((r,i)=>{if((!loc||r.LOCCD===loc)&&(!stp||r.STORE_TYPE===stp))vi.add(i);});rows=RAW.filter((_,i)=>vi.has(i));}
   if(s) rows=rows.filter(r=>Object.values(r).some(v=>(v+'').toLowerCase().includes(s)));
+  document.getElementById('rc2').textContent=rows.length.toLocaleString()+' records';
   const cols=RC.length?RC:(rows.length?Object.keys(rows[0]):[]);
-  // figure out which columns are fully numeric across the filtered rows, so we can total them
-  const numCols=cols.filter(c=>rows.length && rows.every(r=>r[c]===undefined||r[c]===''||!isNaN(rawNum(r[c]))));
-  const totals={}; numCols.forEach(c=>{totals[c]=rows.reduce((s,r)=>s+(isNaN(rawNum(r[c]))?0:rawNum(r[c])),0);});
+  // detect the closing-qty and closing-value columns (by name) and total them for the bar
   const qtyCol=cols.find(c=>/^CLSTKQTY$/i.test(c))||cols.find(c=>/QTY/i.test(c));
   const valCol=cols.find(c=>/^CLSTKVAL$/i.test(c))||cols.find(c=>/VAL/i.test(c));
-  let cnt=rows.length.toLocaleString()+' records';
-  if(qtyCol&&totals[qtyCol]!==undefined) cnt+=' &#183; Total Qty: '+num(totals[qtyCol]);
-  if(valCol&&totals[valCol]!==undefined) cnt+=' &#183; Total Value: '+inr(totals[valCol]);
-  document.getElementById('rc2').textContent=cnt;
+  let barH='<span><span class="tl">Records</span><span class="tv">'+rows.length.toLocaleString()+'</span></span>';
+  if(qtyCol){const tq=rows.reduce((s,r)=>s+(isNaN(rawNum(r[qtyCol]))?0:rawNum(r[qtyCol])),0);barH+='<span><span class="tl">Total Qty</span><span class="tv">'+num(tq)+'</span></span>';}
+  if(valCol){const tv=rows.reduce((s,r)=>s+(isNaN(rawNum(r[valCol]))?0:rawNum(r[valCol])),0);barH+='<span><span class="tl">Total Value</span><span class="tv">'+inr(tv)+'</span></span>';}
+  document.getElementById('rTot').innerHTML=barH;
   let h='<table><thead><tr>'+cols.map(c=>'<th style="white-space:nowrap;font-size:11px">'+c+'</th>').join('')+'</tr></thead><tbody>';
-  if(numCols.length){
-    h+='<tr style="background:#1F3864">'+cols.map((c,i)=>{
-      if(i===0) return '<td style="color:#fff;font-weight:700;white-space:nowrap">TOTAL ('+rows.length.toLocaleString()+')</td>';
-      if(numCols.includes(c)) return '<td style="color:#fff;font-weight:700;text-align:right;white-space:nowrap">'+num(totals[c])+'</td>';
-      return '<td></td>';
-    }).join('')+'</tr>';
-  }
-  rows.slice(0,500).forEach(r=>{h+='<tr>'+cols.map(c=>'<td style="font-size:12px;white-space:nowrap;'+(numCols.includes(c)?'text-align:right':'')+'">'+(r[c]!==undefined?r[c]:'')+'</td>').join('')+'</tr>';});
+  rows.slice(0,500).forEach(r=>{h+='<tr>'+cols.map(c=>'<td style="font-size:12px;white-space:nowrap">'+(r[c]!==undefined?r[c]:'')+'</td>').join('')+'</tr>';});
   if(rows.length>500) h+='<tr><td colspan="'+cols.length+'" style="text-align:center;color:#64748B;padding:10px;font-size:12px">...'+(rows.length-500)+' more records.</td></tr>';
   h+='</tbody></table>'; document.getElementById('rt').innerHTML=h;
 }
@@ -678,10 +675,12 @@ function rP(){
   let rows=plasterRows();
   if(s) rows=rows.filter(r=>r.ITEMNAME.toLowerCase().includes(s)||r.STORENAME.toLowerCase().includes(s)||r.BTREFNO.toLowerCase().includes(s)||r.ITEMCD.toLowerCase().includes(s));
   if(loc) rows=rows.filter(r=>r.LOCCD===loc);
-  const tQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), tV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
-  document.getElementById('pc2').textContent=rows.length.toLocaleString()+' plaster records &#183; '+selPlaster.size+' selected &#183; Total Qty: '+num(tQ)+' &#183; Total Value: '+inr(tV);
+  document.getElementById('pc2').textContent=rows.length.toLocaleString()+' plaster records &#183; '+selPlaster.size+' selected';
+  const pTQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), pTV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  const selRows=rows.filter(r=>selPlaster.has(plasterKey(r)));
+  const sTQ=selRows.reduce((s,r)=>s+r.CLSTKQTY,0), sTV=selRows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  document.getElementById('pTot').innerHTML='<span><span class="tl">Records</span><span class="tv">'+rows.length.toLocaleString()+'</span></span><span><span class="tl">Total Qty</span><span class="tv">'+num(pTQ)+'</span></span><span><span class="tl">Total Value</span><span class="tv">'+inr(pTV)+'</span></span><span><span class="tl">Selected Qty</span><span class="tv">'+num(sTQ)+'</span></span><span><span class="tl">Selected Value</span><span class="tv">'+inr(sTV)+'</span></span>';
   let h='<table><thead><tr><th style="width:34px;text-align:center"><input type="checkbox" class="pchk" id="pAllChk" onchange="togglePlasterAll(this.checked)"></th><th style="width:58px">Loc</th><th style="width:148px">Store</th><th style="width:74px;text-align:center">Type</th><th style="width:106px">Item Code</th><th>Item Name</th><th style="width:104px">Batch No</th><th style="width:74px;text-align:center">Mfg Date</th><th style="width:74px;text-align:center">Exp Date</th><th style="width:88px">Status</th><th style="width:64px;text-align:right">Qty</th><th style="width:108px;text-align:right">Value</th></tr></thead><tbody>';
-  if(rows.length) h+='<tr style="background:#1F3864"><td colspan="10" style="color:#fff;font-weight:700;text-align:right">TOTAL ('+rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+')</td><td style="text-align:right;color:#fff;font-weight:700">'+num(tQ)+'</td><td style="text-align:right;color:#fff;font-weight:700">'+inr(tV)+'</td></tr>';
   rows.forEach(r=>{const k=plasterKey(r),ck=selPlaster.has(k);h+='<tr><td style="text-align:center"><input type="checkbox" class="pchk" data-k="'+k.replace(/"/g,'&quot;')+'" '+(ck?'checked':'')+' onchange="onPlasterCheck(this)"></td><td style="font-weight:700;color:#1F3864">'+r.LOCCD+'</td><td style="font-size:12px">'+r.STORENAME+'</td><td style="text-align:center"><span style="font-size:11px;background:#EBF3FB;color:#1F3864;padding:2px 7px;border-radius:10px">'+r.STORE_TYPE+'</span></td><td style="font-size:12px;color:#64748B">'+r.ITEMCD+'</td><td style="font-size:12px">'+r.ITEMNAME+'</td><td style="font-size:12px;font-family:monospace;color:#475569">'+r.BTREFNO+'</td><td style="text-align:center;color:#475569">'+r.MNFMMYY+'</td><td style="text-align:center">'+r.EXPMMYY+'</td><td><span class="badge '+bc(r.EXP_CAT)+'">'+r.EXP_CAT+'</span></td><td style="text-align:right">'+num(r.CLSTKQTY)+'</td><td style="text-align:right;font-weight:600">'+inr(r.CLSTKVAL)+'</td></tr>';});
   if(!rows.length) h+='<tr><td colspan="12" style="text-align:center;color:#64748B;padding:20px">No plaster items found.</td></tr>';
   h+='</tbody></table>'; document.getElementById('pt').innerHTML=h;
@@ -690,6 +689,10 @@ function onPlasterCheck(el){
   const k=el.getAttribute('data-k');
   if(el.checked) selPlaster.add(k); else selPlaster.delete(k);
   document.getElementById('pc2').textContent=document.getElementById('pc2').textContent.replace(/\d+ selected/,selPlaster.size+' selected');
+  const rows=plasterRows().filter(r=>selPlaster.has(plasterKey(r)));
+  const sTQ=rows.reduce((s,r)=>s+r.CLSTKQTY,0), sTV=rows.reduce((s,r)=>s+r.CLSTKVAL,0);
+  const bar=document.getElementById('pTot');
+  bar.innerHTML=bar.innerHTML.replace(/Selected Qty<\/span><span class="tv">[^<]*/,'Selected Qty</span><span class="tv">'+num(sTQ)).replace(/Selected Value<\/span><span class="tv">[^<]*/,'Selected Value</span><span class="tv">'+inr(sTV));
 }
 function togglePlasterAll(state){
   const s=document.getElementById('sbP').value.toLowerCase(), loc=document.getElementById('lfP').value;
