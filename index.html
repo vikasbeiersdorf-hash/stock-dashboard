@@ -368,7 +368,7 @@ async function doCompare(val){
     date = earlier.length ? earlier[earlier.length-1] : DATES[0];
   }
   if(date===curDate){
-    panel.innerHTML='<div style="color:#C00000;font-size:13px">Compare karne ke liye ek alag date chunein (currently viewed date se).</div>';
+    panel.innerHTML='<div style="color:#C00000;font-size:13px">(currently viewed date se).</div>';
     panel.style.display='block';
     return;
   }
